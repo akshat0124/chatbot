@@ -14,19 +14,22 @@ export default function ChatBot() {
     if (!input.trim()) return;
 
     // Add user's message first
-    setMessages(prev => [...prev, { text: input, sender: "user" }]);
+    const newMessages = [...messages, { text: input, sender: "user" }];
+    setMessages(newMessages);
     setInput("");
     setIsLoading(true);
 
     try {
       const response = await axios.post(
         "https://akshat2005.app.n8n.cloud/webhook/mychatbot",
-        { message: input }
+        {
+          message: input,
+          history: newMessages.map(m => ({ sender: m.sender, text: m.text }))
+        }
       );
-      
-      // Adapt to match the response JSON shape
+
       const reply = response.data.reply;
-      
+
       setMessages(prev => [...prev, { text: reply, sender: "bot" }]);
     } catch (error) {
       setMessages(prev => [
@@ -36,7 +39,6 @@ export default function ChatBot() {
       console.error("Error contacting server:", error);
     } finally {
       setIsLoading(false);
-      // Scroll to bottom
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   };
@@ -47,7 +49,7 @@ export default function ChatBot() {
 
   return (
     <div className="chatbot-container">
-       <div className="chatbot-header">🤖 Chatbot</div> {/* new header */}
+      <div className="chatbot-header">🤖 Chatbot</div>
       <div className="messages">
         {messages.map((msg, idx) => (
           <div
